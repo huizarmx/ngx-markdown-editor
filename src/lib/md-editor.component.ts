@@ -32,6 +32,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
   @Input() public height: string = "300px";
   @Input() public preRender: Function;
   @Input() public upload: Function;
+  @Input() public blur: Function;
 
   @Input()
   public get mode(): string {
@@ -150,6 +151,12 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     this._editor.on("change", (e: any) => {
       let val = this._editor.getValue();
       this.markdownValue = val;
+    });
+
+    this._editor.on("blur", (e: any) => {
+      if(this.blur && this.blur instanceof Function) {
+        this.blur(e);
+      }
     });
   }
 
