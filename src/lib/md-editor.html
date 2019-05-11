@@ -1,60 +1,64 @@
 <div class="md-editor-container" [class.fullscreen]="isFullScreen" [class.md-editor-resizable]="options?.resizable"
-  [style.height]="height">
+  [style.height]="height" [style.width]="width">
   <div class="md-layout">
     <div class="tool-bar" *ngIf="!hideToolbar && mode != 'preview'">
       <div class="btn-group">
-        <button class="btn btn-sm btn-default" type="button" title="Bold" (click)="insertContent('Bold')"
-          *ngIf="!hideIcons.Bold">
-          <i class="fa fa-bold"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Bold.title" (click)="insertContent('Bold')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Bold.hidden">
+          <i [ngClass]="icons.Bold.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" title="Italic" (click)="insertContent('Italic')"
-          *ngIf="!hideIcons.Italic">
-          <i class="fa fa-italic"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Italic.title" (click)="insertContent('Italic')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Italic.hidden">
+          <i [ngClass]="icons.Italic.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" title="Heading" (click)="insertContent('Heading')"
-          *ngIf="!hideIcons.Heading">
-          <i class="fa fa-header"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Heading.title" (click)="insertContent('Heading')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Heading.hidden">
+          <i [ngClass]="icons.Heading.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" title="Refrence" (click)="insertContent('Refrence')"
-          *ngIf="!hideIcons.Refrence">
-          <i class="fa fa-quote-left"></i>
-        </button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-sm btn-default" type="button" title="Link" (click)="insertContent('Link')"
-          *ngIf="!hideIcons.Link">
-          <i class="fa fa-link"></i>
-        </button>
-        <button class="btn btn-sm btn-default" type="button" title="Image" (click)="insertContent('Image')"
-          *ngIf="!hideIcons.Image">
-          <i class="fa fa-image"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Refrence.title" (click)="insertContent('Refrence')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Refrence.hidden">
+          <i [ngClass]="icons.Refrence.iconClass"></i>
         </button>
       </div>
       <div class="btn-group">
-        <button class="btn btn-sm btn-default" type="button" title="Unordered List" (click)="insertContent('Ul')"
-          *ngIf="!hideIcons.Ul">
-          <i class="fa fa-list-ul"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Link.title" (click)="insertContent('Link')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Link.hidden">
+          <i [ngClass]="icons.Link.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" title="Ordered List" (click)="insertContent('Ol')"
-          *ngIf="!hideIcons.Ol">
-          <i class="fa fa-list-ol"></i>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Image.title" (click)="insertContent('Image')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Image.hidden">
+          <i [ngClass]="icons.Image.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" title="Code Block" (click)="insertContent('Code')"
-          *ngIf="!hideIcons.Code">
-          <i class="fa fa-file-code-o"></i>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Ul.title" (click)="insertContent('Ul')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Ul.hidden">
+          <i [ngClass]="icons.Ul.iconClass"></i>
+        </button>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Ol.title" (click)="insertContent('Ol')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Ol.hidden">
+          <i [ngClass]="icons.Ol.iconClass"></i>
+        </button>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Code.title" (click)="insertContent('Code')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Code.hidden">
+          <i [ngClass]="icons.Code.iconClass"></i>
+        </button>
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Table.title" (click)="insertContent('Table')" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Table.hidden">
+          <i [ngClass]="icons.Table.iconClass"></i>
         </button>
       </div>
       <div class="btn-group">
         <button class="btn btn-sm btn-default" type="button"
-          [attr.title]="showPreviewPanel ? 'Hide Preview' : 'Show Preview'" (click)="togglePreview()"
-          *ngIf="!hideIcons.TogglePreview">
-          <i class="fa" [class.fa-eye]="!showPreviewPanel" [class.fa-eye-slash]="showPreviewPanel"></i>
+          [attr.title]="showPreviewPanel ? icons.TogglePreview.titleToggle : icons.TogglePreview.title" (click)="togglePreview()" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.TogglePreview.hidden">
+          <i class="{{showPreviewPanel? icons.TogglePreview.iconClassToggle : icons.TogglePreview.iconClass}}"></i>
         </button>
       </div>
       <div class="btn-group pull-right hide-split">
-        <button class="btn btn-sm btn-default" type="button" [class.active]="isFullScreen" (click)="fullScreen()"
-          *ngIf="!hideIcons.FullScreen">
-          <i class="fa fa-arrows-alt"></i>
+        <button class="btn btn-sm btn-default {{isFullScreen? icons.Fullscreen.activeClass : '' }}" [title]="isFullScreen? icons.Fullscreen.titleToggle : icons.Fullscreen.title" type="button" (click)="fullScreen()" (mousedown)="toolbarButtonMouseDown()"
+          *ngIf="!icons.Fullscreen.hidden">
+          <i [ngClass]="icons.Fullscreen.iconClass"></i>
         </button>
       </div>
     </div>

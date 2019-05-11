@@ -1,7 +1,7 @@
-import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef } from '@angular/core';
+import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef, EventEmitter, Output } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor, NG_VALIDATORS, Validator, AbstractControl, ValidationErrors } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
-import { MdEditorOption } from './md-editor.types';
+import { MdEditorOption, IconOptions, DefaultIconOptions } from './md-editor.types';
 
 declare let ace: any;
 declare let marked: any;
@@ -23,21 +23,170 @@ declare let hljs: any;
       multi: true
     }
   ]
-})
+ })
+export class MarkdownEditorComponent implements ControlValueAccessor, Validator, DefaultIconOptions {
 
-export class MarkdownEditorComponent implements ControlValueAccessor, Validator {
+  get BOLD_ID(): string { return "Bold"; }
+  get ITALIC_ID(): string { return "Italic"; }
+  get HEADING_ID(): string { return "Heading"; }
+  get REFRENCE_ID(): string { return "Refrence"; }
+  get LINK_ID(): string { return "Link"; }
+  get IMAGE_ID(): string { return "Image"; }
+  get UL_ID(): string { return "Ul"; }
+  get OL_ID(): string { return "Ol"; }
+  get CODE_ID(): string { return "Code"; }
+  get TABLE_ID(): string { return "Table"; }
+  get TOGGLE_PREVIEW_ID(): string { return "TogglePreview"; }
+  get FULLSCREEN_ID(): string { return "Fullscreen"; }
+
+  get BOLD(): IconOptions {
+   return {
+     id: this.BOLD_ID,
+     hidden: false,
+     iconClass: "fa fa-bold",
+     title: "Bold"
+   };
+ }
+  get ITALIC(): IconOptions {
+   return {
+     id: this.ITALIC_ID,
+     hidden: false,
+     iconClass: "fa fa-italic",
+     title: "Italic"
+   };
+ }
+  get HEADING(): IconOptions {
+   return {
+     id: this.HEADING_ID,
+     hidden: false,
+     iconClass: "fa fa-header",
+     title: "Heading"
+   };
+ }
+  get REFRENCE(): IconOptions {
+   return {
+     id: this.REFRENCE_ID,
+     hidden: false,
+     iconClass: "fa fa-quote-left",
+     title: "Link"
+   };
+ }
+  get LINK(): IconOptions {
+   return {
+     id: this.LINK_ID,
+     hidden: false,
+     iconClass: "fa fa-link",
+     title: "Link"
+   };
+ }
+  get IMAGE(): IconOptions {
+   return {
+     id: this.IMAGE_ID,
+     hidden: false,
+     iconClass: "fa fa-image",
+     title: "Image"
+   };
+ }
+  get UL(): IconOptions {
+   return {
+     id: this.UL_ID,
+     hidden: false,
+     iconClass: "fa fa-list-ul",
+     title: "Unordered List"
+   };
+ }
+  get OL(): IconOptions {
+   return {
+     id: this.OL_ID,
+     hidden: false,
+     iconClass: "fa fa-list-ol",
+     title: "Ordered List"
+   };
+ }
+  get CODE(): IconOptions {
+   return {
+     id: this.OL_ID,
+     hidden: false,
+     iconClass: "fa fa-file-code-o",
+     title: "Code"
+   };
+ }
+  get TABLE(): IconOptions {
+   return {
+     id: this.TABLE_ID,
+     hidden: false,
+     iconClass: "fa fa-table",
+     title: "Table"
+   };
+ }
+  get TOGGLE_PREVIEW(): IconOptions {
+   return {
+     id: this.TOGGLE_PREVIEW_ID,
+     hidden: false,
+     iconClass: "fa fa-eye",
+     iconClassToggle: "fa fa-eye-slash",
+     title: "Show Preview",
+     titleToggle: "Hide Preview"
+   };
+ }
+  get FULLSCREEN(): IconOptions {
+   return {
+     id: this.TOGGLE_PREVIEW_ID,
+     hidden: false,
+     iconClass: "fa fa-arrows-alt",
+     activeClass: "active",
+     title: "Fullscreen",
+     titleToggle: "Restore"
+   };
+ }
+
+  get ALL_ICONS(): {[id: string]: IconOptions} {
+   let allIcons: {[id: string]: IconOptions} = {};
+   allIcons[this.BOLD_ID] = this.BOLD;
+   allIcons[this.ITALIC_ID] = this.ITALIC;
+   allIcons[this.HEADING_ID] = this.HEADING;
+   allIcons[this.REFRENCE_ID] = this.REFRENCE;
+   allIcons[this.LINK_ID] = this.LINK;
+   allIcons[this.IMAGE_ID] = this.IMAGE;
+   allIcons[this.UL_ID] = this.UL;
+   allIcons[this.OL_ID] = this.OL;
+   allIcons[this.CODE_ID] = this.CODE;
+   allIcons[this.TABLE_ID] = this.TABLE;
+   allIcons[this.TOGGLE_PREVIEW_ID] = this.TOGGLE_PREVIEW;
+   allIcons[this.FULLSCREEN_ID] = this.FULLSCREEN;
+   return allIcons;
+ }
+
+  get ALL_ICON_IDS(): Array<string> {
+   return [
+     this.BOLD_ID,
+     this.ITALIC_ID,
+     this.HEADING_ID,
+     this.REFRENCE_ID,
+     this.LINK_ID,
+     this.IMAGE_ID,
+     this.UL_ID,
+     this.OL_ID,
+     this.CODE_ID,
+     this.TABLE_ID,
+     this.TOGGLE_PREVIEW_ID,
+     this.FULLSCREEN_ID
+   ];
+ }
 
   @ViewChild('aceEditor') public aceEditorContainer: ElementRef;
   @Input() public hideToolbar: boolean = false;
   @Input() public height: string = "300px";
+  @Input() public width: string = "100%";
   @Input() public preRender: Function;
   @Input() public upload: Function;
-  @Input() public blur: Function;
+  @Output() public blur = new EventEmitter<any>();
 
   @Input()
   public get mode(): string {
     return this._mode || 'editor';
   }
+
   public set mode(value: string) {
     if (!value || (value.toLowerCase() !== 'editor' && value.toLowerCase() !== 'preview')) {
       value = 'editor';
@@ -51,15 +200,21 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     return this._options || {};
   }
   public set options(value: MdEditorOption) {
+    const defaultIconOptions: DefaultIconOptions = this;
+    this._defaultOption = defaultIconOptions.ALL_ICONS;
     this._options = Object.assign(this._defaultOption, {}, value);
-    this.hideIcons = {};
-    if (this._options.hideIcons) {
-      this._options.hideIcons.forEach((v: any) => this.hideIcons[v] = true);
+    this.icons = defaultIconOptions.ALL_ICONS;
+    if (this._options.icons) {
+      for (let key of Object.keys(this._options.icons)) {
+        if(defaultIconOptions.ALL_ICON_IDS.indexOf(key)!== -1) {
+          this.icons[key] = this._options.icons[key];
+        }
+      }
     }
   }
   private _options: any = {};
 
-  public hideIcons: any = {};
+  public icons: {[id: string]: IconOptions} = {};
   public showPreviewPanel: boolean = true;
   public isFullScreen: boolean = false;
   public previewHtml: any;
@@ -87,12 +242,13 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
   private _markdownValue: any;
 
   private _editor: any;
+  private _btnToolbarHasBeenClicked: boolean = false;
   private _editorResizeTimer: any;
   private _renderMarkTimeout: any;
   private _markedOpt: any;
   private _defaultOption: MdEditorOption = {
     showBorder: true,
-    hideIcons: [],
+    icons: {},
     scrollPastEnd: 0,
     enablePreviewContentClick: false,
     resizable: false
@@ -120,7 +276,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
       return `<pre style="padding: 0; border-radius: 0;"><code class="hljs ${language}">${highlighted}</code></pre>`;
     };
     markedRender.table = (header: string, body: string) => {
-      return `<table class="table table-bordered">\n<thead>\n${header}</thead>\n<tbody>\n${body}</tbody>\n</table>\n`;
+      return `<table class="table table-bordered table-striped">\n<thead>\n${header}</thead>\n<tbody>\n${body}</tbody>\n</table>\n`;
     };
     markedRender.listitem = (text: any) => {
       if (/^\s*\[[x ]\]\s*/.test(text)) {
@@ -149,13 +305,12 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     this._editor.setOption('scrollPastEnd', this._options.scrollPastEnd || 0);
 
     this._editor.on("change", (e: any) => {
-      let val = this._editor.getValue();
-      this.markdownValue = val;
+      this.markdownValue = this._editor.getValue();
     });
 
     this._editor.on("blur", (e: any) => {
-      if(this.blur && this.blur instanceof Function) {
-        this.blur(e);
+      if(!this._btnToolbarHasBeenClicked) {
+        this.blur.emit(e);
       }
     });
   }
@@ -190,6 +345,10 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
       result = { maxlength: true };
     }
     return result;
+  }
+
+  toolbarButtonMouseDown() {
+    this._btnToolbarHasBeenClicked = true;
   }
 
   insertContent(type: string, customContent?: string) {
@@ -231,6 +390,16 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
         selectedText = `1. ${selectedText || initText}`
         startSize = 3;
         break;
+      case 'Table':
+        selectedText =`
+| ** ${selectedText || initText} ** | **Column Header** | **Column Header** | **Column Header** |
+|--------------|-----------------------|-------------------|--------------------|
+| Text         | Yes                   | Yes               | Yes                |
+| Text         | Yes                   | Yes               | Yes                |
+| Text         | Yes                   | Yes               | Yes                |
+| Text         | Yes                   | Yes               | Yes                |`;
+        startSize = 6;
+        break;
       case 'Code':
         initText = 'Source Code';
         selectedText = "```language\r\n" + (selectedText || initText) + "\r\n```";
@@ -247,6 +416,11 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
       range.end.column = range.start.column + initText.length;
       this._editor.selection.setRange(range);
     }
+    this._btnToolbarHasBeenClicked = false;
+    this._editor.focus();
+  }
+
+  focus() {
     this._editor.focus();
   }
 
@@ -278,6 +452,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     this._editorResizeTimer = setTimeout(() => {
       this._editor.resize();
       this._editor.focus();
+      this._btnToolbarHasBeenClicked = false;
     }, timeOut);
   }
 

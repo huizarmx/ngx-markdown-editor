@@ -1,11 +1,11 @@
 {
-  "name": "ngx-markdown-editor",
-  "version": "1.2.0",
-  "description": "Angular markdown editor based on ace editor",
-  "main": "bundles/ngx-markdown-editor.umd.js",
+  "name": "ngx-hh-md-editor",
+  "version": "1.0.11",
+  "description": "Fork of Angular markdown editor based on ace editor",
+  "main": "bundles/ngx-hh-md-editor.umd.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lon-yang/ngx-markdown-editor.git"
+    "url": "git+https://github.com/huizarmx/ngx-hh-md-editor.git"
   },
   "keywords": [
     "markdown",
@@ -18,9 +18,9 @@
   "author": "Lon.L.Yang",
   "license": "Apache License 2.0",
   "bugs": {
-    "url": "https://github.com/lon-yang/ngx-markdown-editor/issues"
+    "url": "https://github.com/huizarmx/ngx-hh-md-editor/issues"
   },
-  "homepage": "https://github.com/lon-yang/ngx-markdown-editor#readme",
+  "homepage": "https://github.com/huizarmx/ngx-hh-md-editor#readme",
   "peerDependencies": {
     "@angular/common": ">=7.0.0",
     "@angular/core": ">=7.0.0",
@@ -50,14 +50,14 @@
     "typescript": "^3.1.6",
     "zone.js": "^0.8.26"
   },
-  "module": "fesm5/ngx-markdown-editor.js",
-  "es2015": "fesm2015/ngx-markdown-editor.js",
-  "esm5": "esm5/ngx-markdown-editor.js",
-  "esm2015": "esm2015/ngx-markdown-editor.js",
-  "fesm5": "fesm5/ngx-markdown-editor.js",
-  "fesm2015": "fesm2015/ngx-markdown-editor.js",
-  "typings": "ngx-markdown-editor.d.ts",
-  "metadata": "ngx-markdown-editor.metadata.json",
+  "module": "fesm5/ngx-hh-md-editor.js",
+  "es2015": "fesm2015/ngx-hh-md-editor.js",
+  "esm5": "esm5/ngx-hh-md-editor.js",
+  "esm2015": "esm2015/ngx-hh-md-editor.js",
+  "fesm5": "fesm5/ngx-hh-md-editor.js",
+  "fesm2015": "fesm2015/ngx-hh-md-editor.js",
+  "typings": "ngx-hh-md-editor.d.ts",
+  "metadata": "ngx-hh-md-editor.metadata.json",
   "sideEffects": false,
   "dependencies": {
     "tslib": "^1.9.0"
