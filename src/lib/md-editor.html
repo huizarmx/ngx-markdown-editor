@@ -25,7 +25,7 @@
           *ngIf="!icons.Link.hidden">
           <i [ngClass]="icons.Link.iconClass"></i>
         </button>
-        <button class="btn btn-sm btn-default" type="button" [title]="icons.Image.title" (click)="insertContent('Image')" (mousedown)="toolbarButtonMouseDown()"
+        <button class="btn btn-sm btn-default" type="button" [title]="icons.Image.title" (click)="selectImage()" (mousedown)="toolbarButtonMouseDown()"
           *ngIf="!icons.Image.hidden">
           <i [ngClass]="icons.Image.iconClass"></i>
         </button>
@@ -90,3 +90,17 @@
   </div>
   <md-editor-resize-sensor *ngIf="options?.resizable" (resize)="mdEditorResize($event)"></md-editor-resize-sensor>
 </div>
+<ng-template #modalTemplate let-modal>
+  <div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
+    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+      <ngx-image-list-picker #imageListPicker [images]="images" [options]="fileUploadOptions" (init)="onImagePickerInit($event)" (imageSelected)="onImageSelected($event)" (fileUploadSucceded)="onFileUploaded($event)"></ngx-image-list-picker>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
+  </div>
+</ng-template>

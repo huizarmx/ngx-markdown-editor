@@ -5,6 +5,10 @@ export interface MdEditorOption {
   enablePreviewContentClick?: boolean  // Allow user fire the click event on the preview panel, like href etc.
   resizable?: boolean           // Allow resize the editor
   markedjsOpt?: MarkedjsOption  // The markedjs option, see https://marked.js.org/#/USING_ADVANCED.md#options
+  listFilesUrl?: string;
+  uploadFileUrl?: string;
+  getToken?: () => Promise<string>;
+  parametersToAdd?: Map<string, string>;
 }
 
 export interface UploadResult {

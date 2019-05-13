@@ -46,7 +46,13 @@
               "demo/src/assets"
             ],
             "styles": [
-              "demo/src/styles.scss"
+              "demo/src/styles.scss",
+              "demo/src/assets/css/icomoon/styles.css",
+              "demo/src/assets/css/bootstrap.css",
+              "demo/src/assets/css/bootstrap_limitless.css",
+              "demo/src/assets/css/layout.css",
+              "demo/src/assets/css/components.css",
+              "demo/src/assets/css/colors.css"
             ],
             "scripts": []
           },

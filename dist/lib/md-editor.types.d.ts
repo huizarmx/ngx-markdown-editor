@@ -7,6 +7,10 @@ export interface MdEditorOption {
     enablePreviewContentClick?: boolean;
     resizable?: boolean;
     markedjsOpt?: MarkedjsOption;
+    listFilesUrl?: string;
+    uploadFileUrl?: string;
+    getToken?: () => Promise<string>;
+    parametersToAdd?: Map<string, string>;
 }
 export interface UploadResult {
     isImg: boolean;

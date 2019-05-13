@@ -1,11 +1,27 @@
-import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef, EventEmitter, Output } from '@angular/core';
+import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef, EventEmitter, Output, TemplateRef } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor, NG_VALIDATORS, Validator, AbstractControl, ValidationErrors } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MdEditorOption, IconOptions, DefaultIconOptions } from './md-editor.types';
+import { NgxImageListPickerComponent } from 'ngx-image-list-picker';
+import { IFileUploadOptions, IImageDefinition } from 'ngx-image-list-picker';
+import { HttpHeaders, HttpClient } from "@angular/common/http";
+import {NgbModal, ModalDismissReasons, NgbModalRef} from '@ng-bootstrap/ng-bootstrap';
 
 declare let ace: any;
 declare let marked: any;
 declare let hljs: any;
+
+export class OperationResult<T> {
+
+  /* Flag that indicates if the porccess sucess. */
+  public success: boolean;
+
+  /* The result message. */
+  public message: string;
+
+  /* The result of the request. */
+  public result: T;
+}
 
 @Component({
   selector: 'md-editor',
@@ -141,40 +157,41 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
  }
 
   get ALL_ICONS(): {[id: string]: IconOptions} {
-   let allIcons: {[id: string]: IconOptions} = {};
-   allIcons[this.BOLD_ID] = this.BOLD;
-   allIcons[this.ITALIC_ID] = this.ITALIC;
-   allIcons[this.HEADING_ID] = this.HEADING;
-   allIcons[this.REFRENCE_ID] = this.REFRENCE;
-   allIcons[this.LINK_ID] = this.LINK;
-   allIcons[this.IMAGE_ID] = this.IMAGE;
-   allIcons[this.UL_ID] = this.UL;
-   allIcons[this.OL_ID] = this.OL;
-   allIcons[this.CODE_ID] = this.CODE;
-   allIcons[this.TABLE_ID] = this.TABLE;
-   allIcons[this.TOGGLE_PREVIEW_ID] = this.TOGGLE_PREVIEW;
-   allIcons[this.FULLSCREEN_ID] = this.FULLSCREEN;
-   return allIcons;
+    let allIcons: {[id: string]: IconOptions} = {};
+    allIcons[this.BOLD_ID] = this.BOLD;
+    allIcons[this.ITALIC_ID] = this.ITALIC;
+    allIcons[this.HEADING_ID] = this.HEADING;
+    allIcons[this.REFRENCE_ID] = this.REFRENCE;
+    allIcons[this.LINK_ID] = this.LINK;
+    allIcons[this.IMAGE_ID] = this.IMAGE;
+    allIcons[this.UL_ID] = this.UL;
+    allIcons[this.OL_ID] = this.OL;
+    allIcons[this.CODE_ID] = this.CODE;
+    allIcons[this.TABLE_ID] = this.TABLE;
+    allIcons[this.TOGGLE_PREVIEW_ID] = this.TOGGLE_PREVIEW;
+    allIcons[this.FULLSCREEN_ID] = this.FULLSCREEN;
+    return allIcons;
  }
 
   get ALL_ICON_IDS(): Array<string> {
-   return [
-     this.BOLD_ID,
-     this.ITALIC_ID,
-     this.HEADING_ID,
-     this.REFRENCE_ID,
-     this.LINK_ID,
-     this.IMAGE_ID,
-     this.UL_ID,
-     this.OL_ID,
-     this.CODE_ID,
-     this.TABLE_ID,
-     this.TOGGLE_PREVIEW_ID,
-     this.FULLSCREEN_ID
-   ];
- }
+    return [
+      this.BOLD_ID,
+      this.ITALIC_ID,
+      this.HEADING_ID,
+      this.REFRENCE_ID,
+      this.LINK_ID,
+      this.IMAGE_ID,
+      this.UL_ID,
+      this.OL_ID,
+      this.CODE_ID,
+      this.TABLE_ID,
+      this.TOGGLE_PREVIEW_ID,
+      this.FULLSCREEN_ID
+    ];
+  }
 
   @ViewChild('aceEditor') public aceEditorContainer: ElementRef;
+  @ViewChild('modalTemplate') public modalTemplate: TemplateRef<any>;
   @Input() public hideToolbar: boolean = false;
   @Input() public height: string = "300px";
   @Input() public width: string = "100%";
@@ -187,6 +204,8 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     return this._mode || 'editor';
   }
 
+  public images: Array<IImageDefinition>;
+
   public set mode(value: string) {
     if (!value || (value.toLowerCase() !== 'editor' && value.toLowerCase() !== 'preview')) {
       value = 'editor';
@@ -195,13 +214,16 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
   }
   private _mode: string;
 
+  /** The remote invocation promise by requested path */
+  public remoteInvocationPromiseByPath = new Map<string, Promise<any>>();
+
   @Input()
   public get options(): MdEditorOption {
     return this._options || {};
   }
   public set options(value: MdEditorOption) {
     const defaultIconOptions: DefaultIconOptions = this;
-    this._defaultOption = defaultIconOptions.ALL_ICONS;
+    this._defaultOption.icons = defaultIconOptions.ALL_ICONS;
     this._options = Object.assign(this._defaultOption, {}, value);
     this.icons = defaultIconOptions.ALL_ICONS;
     if (this._options.icons) {
@@ -211,7 +233,123 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
         }
       }
     }
+    if(value.uploadFileUrl) {
+      this.fileUploadOptions.url = value.uploadFileUrl;
+    }
+    if(value.getToken) {
+      this.fileUploadOptions.getToken = value.getToken;
+    }
+    if(value.parametersToAdd) {
+      this.fileUploadOptions.parametersToAdd = value.parametersToAdd;
+    }
   }
+
+  private modalRef: NgbModalRef;
+
+  imageListPicker: NgxImageListPickerComponent;
+
+  fileUploadOptions: IFileUploadOptions = {
+    url: "",
+    getToken: () => {
+      return new Promise<string>((resolve: (value?: string) => void, reject: (reason?: any) => void) => {
+        resolve("");
+      });
+    },
+    parametersToAdd: new Map([["path","upload/taxonomia-equipo-bmv"]])
+  };
+
+  public getAllFiles() {
+    this.listFilesInBlobByPath(this.fileUploadOptions.parametersToAdd.get("path")).then((remoteFiles) => {
+      this.images = new Array<IImageDefinition>();
+      if(remoteFiles !== null) {
+        remoteFiles.forEach(remoteFile => {
+          this.images.push({
+            title: decodeURIComponent(this.getFileName(remoteFile)),
+            url: remoteFile
+          });
+        });
+      }
+    });
+  }
+
+  /**
+   * Gets the filename of a url
+   *
+   * @param url the url to review
+   */
+  private getFileName(url: string): string {
+    return url.substring(url.lastIndexOf('/')+1);
+  }
+
+  public onImagePickerInit(imagePickerComponent: NgxImageListPickerComponent) {
+    this.imageListPicker = imagePickerComponent;
+  }
+
+  /**
+   * Lists all the files contained in a path of the blob.
+   *
+   * @param path the path to query in the remote blob container
+   * @param queryCriteria the query criteria to use to fetch data from the remote service
+   */
+  public listFilesInBlobByPath(path: string): Promise<Array<string>> {
+    const url = this._options.listFilesUrl;
+    if (!this.remoteInvocationPromiseByPath.has(url) || this.remoteInvocationPromiseByPath.get(url) === null) {
+      this.remoteInvocationPromiseByPath.set(url, new Promise<Array<any>>((resolve, reject) => {
+        this.fileUploadOptions.getToken().then((token) => {
+          const httpOptions = {
+              headers: new HttpHeaders({
+                'Content-Type':  'application/json',
+                'Authorization': 'Bearer ' + token
+              })
+          };
+          this.http.post(`${url}`, { ruta: path }, httpOptions).subscribe((result) => {
+                  var results: OperationResult<Array<string>> = Object.setPrototypeOf(result, OperationResult.prototype);
+                  this.remoteInvocationPromiseByPath.set(url, null);
+                  if(results.success) {
+                      resolve(results.result);
+                  } else {
+                      reject(results.message);
+                  }
+          }, (error) => {
+            this.remoteInvocationPromiseByPath.set(url, null);
+              reject(error);
+          });
+        });
+      }));
+    }
+    return this.remoteInvocationPromiseByPath.get(url);
+  }
+
+  public onFileUploaded(response: any) {
+    const result = JSON.parse(response);
+    const results: OperationResult<{Title: string, Description: string, Order: number, Source: string}> = Object.setPrototypeOf(result, OperationResult.prototype);
+    if(results.success) {
+      const imageDefinition: IImageDefinition =  {
+        title: results.result.Title,
+        url: results.result.Source
+      };
+      const newImages = JSON.parse(JSON.stringify(this.imageListPicker.images)) as Array<IImageDefinition>;
+      newImages.push(imageDefinition);
+      this.images = newImages;
+      setTimeout(() => {
+        this.imageListPicker.setSelectedImage(imageDefinition);
+      }, 0);
+    }
+  }
+
+  private _defaultOption: MdEditorOption = {
+    showBorder: true,
+    icons: {},
+    scrollPastEnd: 0,
+    enablePreviewContentClick: false,
+    resizable: false,
+    getToken: () => {
+      return new Promise<string>((resolve: (value?: string) => void, reject: (reason?: any) => void) => {
+        resolve("");
+      });
+    },
+    parametersToAdd: new Map<string, string>()
+  };
   private _options: any = {};
 
   public icons: {[id: string]: IconOptions} = {};
@@ -246,13 +384,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
   private _editorResizeTimer: any;
   private _renderMarkTimeout: any;
   private _markedOpt: any;
-  private _defaultOption: MdEditorOption = {
-    showBorder: true,
-    icons: {},
-    scrollPastEnd: 0,
-    enablePreviewContentClick: false,
-    resizable: false
-  };
+
   private get _hasUploadFunction(): boolean {
     return this.upload && this.upload instanceof Function;
   }
@@ -264,7 +396,9 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     @Attribute('required') public required: boolean = false,
     @Attribute('maxlength') public maxlength: number = -1,
     private _renderer: Renderer,
-    private _domSanitizer: DomSanitizer) {
+    private _domSanitizer: DomSanitizer,
+    private http: HttpClient,
+    private modalService: NgbModal) {
 
   }
 
@@ -418,6 +552,42 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     }
     this._btnToolbarHasBeenClicked = false;
     this._editor.focus();
+  }
+
+  public selectImage() {
+    this.getAllFiles();
+    this.openModal(this.modalTemplate);
+  }
+
+  public onImageSelected(image: IImageDefinition) {
+    if (!this._editor) return;
+    let selectedText = this._editor.getSelectedText();
+    let isSelected = !!selectedText;
+    let startSize = 2;
+    let initText: string = '';
+    let range = this._editor.selection.getRange();
+    selectedText = "![](" + image.url + ")";
+    this._editor.session.replace(range, selectedText);
+    if (!isSelected) {
+      range.start.column += startSize;
+      range.end.column = range.start.column + initText.length;
+      this._editor.selection.setRange(range);
+    }
+    this.modalRef.close();
+    this._editor.focus();
+  }
+
+  public openModal(content: any): Promise<string> {
+    return new Promise<string>((resolve: (value?: string) => void, reject: (reason?: any) => void) => {
+      this.modalRef = this.modalService.open(content);
+      this.modalRef.result.then((result) => {
+        this._btnToolbarHasBeenClicked = false;
+        resolve(result);
+      }, (reason) => {
+        this._btnToolbarHasBeenClicked = false;
+        resolve(null);
+      });
+    });
   }
 
   focus() {
