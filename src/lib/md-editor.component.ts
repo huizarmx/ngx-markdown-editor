@@ -384,8 +384,8 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
           this.isFullScreen = !this.isFullScreen;
           this._renderer.setElementStyle(document.body, 'overflowY', this.isFullScreen ? 'hidden' : 'auto');
           this.editorResize();
-          this.blur.emit(e);
         }
+        this.blur.emit(e);
       }
     });
   }
@@ -506,7 +506,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     let startSize = 2;
     let initText: string = '';
     let range = this._editor.selection.getRange();
-    selectedText = "![](" + image.url + ")";
+    selectedText = '<img src="' + image.url + '" width="100%"></img>';
     this._editor.session.replace(range, selectedText);
     if (!isSelected) {
       range.start.column += startSize;

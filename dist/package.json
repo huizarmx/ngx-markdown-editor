@@ -1,6 +1,6 @@
 {
   "name": "ngx-hh-md-editor",
-  "version": "1.0.18",
+  "version": "1.0.21",
   "description": "Fork of Angular markdown editor based on ace editor",
   "main": "bundles/ngx-hh-md-editor.umd.js",
   "repository": {
