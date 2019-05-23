@@ -9,6 +9,7 @@ export interface MdEditorOption {
     markedjsOpt?: MarkedjsOption;
     listFilesUrl?: string;
     uploadFileUrl?: string;
+    isVideoList?: string;
     getToken?: () => Promise<string>;
     parametersToAdd?: Map<string, string>;
 }

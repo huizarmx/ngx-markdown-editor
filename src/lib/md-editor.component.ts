@@ -1,4 +1,4 @@
-import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef, EventEmitter, Output, TemplateRef } from '@angular/core';
+import { Component, ViewChild, forwardRef, Renderer, Attribute, Input, ElementRef, EventEmitter, Output, TemplateRef, HostListener } from '@angular/core';
 import { NG_VALUE_ACCESSOR, ControlValueAccessor, NG_VALIDATORS, Validator, AbstractControl, ValidationErrors } from '@angular/forms';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MdEditorOption, IconOptions, DefaultIconOptions } from './md-editor.types';
@@ -193,11 +193,18 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
   @ViewChild('aceEditor') public aceEditorContainer: ElementRef;
   @ViewChild('modalTemplate') public modalTemplate: TemplateRef<any>;
   @Input() public hideToolbar: boolean = false;
-  @Input() public height: string = "300px";
+  @Input() public height: string = "357px";
   @Input() public width: string = "100%";
   @Input() public preRender: Function;
   @Input() public upload: Function;
   @Output() public blur = new EventEmitter<any>();
+
+  public screenHeight: number = window.innerHeight;
+
+  @HostListener('window:resize', ['$event'])
+  onResize(event?) {
+     this.screenHeight = window.innerHeight;
+  }
 
   @Input()
   public get mode(): string {
@@ -234,7 +241,13 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
       }
     }
     if(value.uploadFileUrl) {
-      this.fileUploadOptions.url = value.uploadFileUrl;
+      this.fileUploadOptions.uploadFileUrl = value.uploadFileUrl;
+    }
+    if(value.listFilesUrl) {
+      this.fileUploadOptions.listFilesUrl = value.listFilesUrl;
+    }
+    if(value.isVideoList) {
+      this.fileUploadOptions.isVideoList = value.isVideoList;
     }
     if(value.getToken) {
       this.fileUploadOptions.getToken = value.getToken;
@@ -249,7 +262,9 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
   imageListPicker: NgxImageListPickerComponent;
 
   fileUploadOptions: IFileUploadOptions = {
-    url: "",
+    listFilesUrl: "",
+    uploadFileUrl: "",
+    isVideoList: "",
     getToken: () => {
       return new Promise<string>((resolve: (value?: string) => void, reject: (reason?: any) => void) => {
         resolve("");
@@ -257,85 +272,6 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     },
     parametersToAdd: new Map([["path","upload/taxonomia-equipo-bmv"]])
   };
-
-  public getAllFiles() {
-    this.listFilesInBlobByPath(this.fileUploadOptions.parametersToAdd.get("path")).then((remoteFiles) => {
-      this.images = new Array<IImageDefinition>();
-      if(remoteFiles !== null) {
-        remoteFiles.forEach(remoteFile => {
-          this.images.push({
-            title: decodeURIComponent(this.getFileName(remoteFile)),
-            url: remoteFile
-          });
-        });
-      }
-    });
-  }
-
-  /**
-   * Gets the filename of a url
-   *
-   * @param url the url to review
-   */
-  private getFileName(url: string): string {
-    return url.substring(url.lastIndexOf('/')+1);
-  }
-
-  public onImagePickerInit(imagePickerComponent: NgxImageListPickerComponent) {
-    this.imageListPicker = imagePickerComponent;
-  }
-
-  /**
-   * Lists all the files contained in a path of the blob.
-   *
-   * @param path the path to query in the remote blob container
-   * @param queryCriteria the query criteria to use to fetch data from the remote service
-   */
-  public listFilesInBlobByPath(path: string): Promise<Array<string>> {
-    const url = this._options.listFilesUrl;
-    if (!this.remoteInvocationPromiseByPath.has(url) || this.remoteInvocationPromiseByPath.get(url) === null) {
-      this.remoteInvocationPromiseByPath.set(url, new Promise<Array<any>>((resolve, reject) => {
-        this.fileUploadOptions.getToken().then((token) => {
-          const httpOptions = {
-              headers: new HttpHeaders({
-                'Content-Type':  'application/json',
-                'Authorization': 'Bearer ' + token
-              })
-          };
-          this.http.post(`${url}`, { ruta: path }, httpOptions).subscribe((result) => {
-                  var results: OperationResult<Array<string>> = Object.setPrototypeOf(result, OperationResult.prototype);
-                  this.remoteInvocationPromiseByPath.set(url, null);
-                  if(results.success) {
-                      resolve(results.result);
-                  } else {
-                      reject(results.message);
-                  }
-          }, (error) => {
-            this.remoteInvocationPromiseByPath.set(url, null);
-              reject(error);
-          });
-        });
-      }));
-    }
-    return this.remoteInvocationPromiseByPath.get(url);
-  }
-
-  public onFileUploaded(response: any) {
-    const result = JSON.parse(response);
-    const results: OperationResult<{Title: string, Description: string, Order: number, Source: string}> = Object.setPrototypeOf(result, OperationResult.prototype);
-    if(results.success) {
-      const imageDefinition: IImageDefinition =  {
-        title: results.result.Title,
-        url: results.result.Source
-      };
-      const newImages = JSON.parse(JSON.stringify(this.imageListPicker.images)) as Array<IImageDefinition>;
-      newImages.push(imageDefinition);
-      this.images = newImages;
-      setTimeout(() => {
-        this.imageListPicker.setSelectedImage(imageDefinition);
-      }, 0);
-    }
-  }
 
   private _defaultOption: MdEditorOption = {
     showBorder: true,
@@ -444,7 +380,12 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
 
     this._editor.on("blur", (e: any) => {
       if(!this._btnToolbarHasBeenClicked) {
-        this.blur.emit(e);
+        if(this.isFullScreen) {
+          this.isFullScreen = !this.isFullScreen;
+          this._renderer.setElementStyle(document.body, 'overflowY', this.isFullScreen ? 'hidden' : 'auto');
+          this.editorResize();
+          this.blur.emit(e);
+        }
       }
     });
   }
@@ -555,11 +496,10 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
   }
 
   public selectImage() {
-    this.getAllFiles();
     this.openModal(this.modalTemplate);
   }
 
-  public onImageSelected(image: IImageDefinition) {
+  public onFileSelected(image: IImageDefinition) {
     if (!this._editor) return;
     let selectedText = this._editor.getSelectedText();
     let isSelected = !!selectedText;
@@ -599,7 +539,12 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator,
     this.editorResize();
   }
 
+  processClickToolbar() {
+    this._btnToolbarHasBeenClicked = false;
+  }
+
   previewPanelClick(event: Event) {
+    this._btnToolbarHasBeenClicked = false;
     if (this.options.enablePreviewContentClick !== true) {
       event.preventDefault();
       event.stopImmediatePropagation();

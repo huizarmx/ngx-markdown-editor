@@ -1,6 +1,6 @@
 {
   "name": "ngx-hh-md-editor",
-  "version": "1.0.15",
+  "version": "1.0.18",
   "description": "Fork of Angular markdown editor based on ace editor",
   "main": "bundles/ngx-hh-md-editor.umd.js",
   "repository": {
@@ -27,7 +27,7 @@
     "@angular/forms": ">=7.0.0",
     "@angular/platform-browser": ">=7.0.0",
     "@ng-bootstrap/ng-bootstrap": "4.1.2",
-    "ngx-image-list-picker": "0.0.6",
+    "ngx-image-list-picker": "0.0.9",
     "ng2-file-upload": "1.3.0"
   },
   "devDependencies": {
@@ -54,7 +54,7 @@
     "typescript": "^3.1.6",
     "zone.js": "^0.8.26",
     "@ng-bootstrap/ng-bootstrap": "4.1.2",
-    "ngx-image-list-picker": "0.0.6"
+    "ngx-image-list-picker": "0.0.9"
   },
   "module": "fesm5/ngx-hh-md-editor.js",
   "es2015": "fesm2015/ngx-hh-md-editor.js",

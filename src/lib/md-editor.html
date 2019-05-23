@@ -1,7 +1,7 @@
 <div class="md-editor-container" [class.fullscreen]="isFullScreen" [class.md-editor-resizable]="options?.resizable"
   [style.height]="height" [style.width]="width">
   <div class="md-layout">
-    <div class="tool-bar" *ngIf="!hideToolbar && mode != 'preview'">
+    <div class="tool-bar" *ngIf="!hideToolbar && mode != 'preview'" (mousedown)="toolbarButtonMouseDown()" (click)="processClickToolbar()">
       <div class="btn-group">
         <button class="btn btn-sm btn-default" type="button" [title]="icons.Bold.title" (click)="insertContent('Bold')" (mousedown)="toolbarButtonMouseDown()"
           *ngIf="!icons.Bold.hidden">
@@ -77,8 +77,8 @@
           <div class="ace-editor" #aceEditor></div>
         </div>
       </div>
-      <div [style.display]="showPreviewPanel ? 'block' : 'none'" (click)="previewPanelClick($event)">
-        <div class="preview-panel" [innerHtml]="previewHtml"></div>
+      <div [style.display]="showPreviewPanel ? 'block' : 'none'" (click)="previewPanelClick($event)" (mousedown)="toolbarButtonMouseDown()">
+        <div class="preview-panel" [innerHtml]="previewHtml" [style.height]="isFullScreen ? (screenHeight - 57) + 'px' : height + 'px'"></div>
       </div>
     </div>
     <div class="md-footer" *ngIf="maxlength > 0 && mode != 'preview'">
@@ -91,16 +91,5 @@
   <md-editor-resize-sensor *ngIf="options?.resizable" (resize)="mdEditorResize($event)"></md-editor-resize-sensor>
 </div>
 <ng-template #modalTemplate let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Profile update</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  <div class="modal-body">
-      <ngx-image-list-picker #imageListPicker [images]="images" [options]="fileUploadOptions" (init)="onImagePickerInit($event)" (imageSelected)="onImageSelected($event)" (fileUploadSucceded)="onFileUploaded($event)"></ngx-image-list-picker>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="modal.close('Save click')">Save</button>
-  </div>
+  <ngx-file-list-picker #imageListPicker [options]="fileUploadOptions" (fileSelected)="onFileSelected($event)" ></ngx-file-list-picker>
 </ng-template>

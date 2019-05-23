@@ -54,6 +54,8 @@ export declare class MarkdownEditorComponent implements ControlValueAccessor, Va
     preRender: Function;
     upload: Function;
     blur: EventEmitter<any>;
+    screenHeight: number;
+    onResize(event?: any): void;
     mode: string;
     images: Array<IImageDefinition>;
     private _mode;
@@ -63,22 +65,6 @@ export declare class MarkdownEditorComponent implements ControlValueAccessor, Va
     private modalRef;
     imageListPicker: NgxImageListPickerComponent;
     fileUploadOptions: IFileUploadOptions;
-    getAllFiles(): void;
-    /**
-     * Gets the filename of a url
-     *
-     * @param url the url to review
-     */
-    private getFileName;
-    onImagePickerInit(imagePickerComponent: NgxImageListPickerComponent): void;
-    /**
-     * Lists all the files contained in a path of the blob.
-     *
-     * @param path the path to query in the remote blob container
-     * @param queryCriteria the query criteria to use to fetch data from the remote service
-     */
-    listFilesInBlobByPath(path: string): Promise<Array<string>>;
-    onFileUploaded(response: any): void;
     private _defaultOption;
     private _options;
     icons: {
@@ -110,10 +96,11 @@ export declare class MarkdownEditorComponent implements ControlValueAccessor, Va
     toolbarButtonMouseDown(): void;
     insertContent(type: string, customContent?: string): void;
     selectImage(): void;
-    onImageSelected(image: IImageDefinition): void;
+    onFileSelected(image: IImageDefinition): void;
     openModal(content: any): Promise<string>;
     focus(): void;
     togglePreview(): void;
+    processClickToolbar(): void;
     previewPanelClick(event: Event): void;
     fullScreen(): void;
     mdEditorResize(size: any): void;

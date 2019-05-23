@@ -7,6 +7,7 @@ export interface MdEditorOption {
   markedjsOpt?: MarkedjsOption  // The markedjs option, see https://marked.js.org/#/USING_ADVANCED.md#options
   listFilesUrl?: string;
   uploadFileUrl?: string;
+  isVideoList?: string;
   getToken?: () => Promise<string>;
   parametersToAdd?: Map<string, string>;
 }
